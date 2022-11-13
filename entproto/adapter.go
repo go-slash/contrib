@@ -155,11 +155,16 @@ func (a *Adapter) parse() error {
 			if len(fd.Service) == 0 {
 				fd.Service = append(fd.Service, svcResources.svc)
 			} else {
+				var exist = false
 				for _, svc := range fd.Service {
 					if svc.GetName() == svcResources.svc.GetName() {
 						svc.Method = append(svc.Method, svcResources.svc.Method...)
+						exist = true
 						break
 					}
+				}
+				if !exist {
+					fd.Service = append(fd.Service, svcResources.svc)
 				}
 			}
 			fd.MessageType = append(fd.MessageType, svcResources.svcMessages...)

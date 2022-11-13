@@ -43,7 +43,7 @@ func TestPonyService_BatchCreate(t *testing.T) {
 	}
 
 	// Valid request
-	resp, err := svc.BatchCreate(ctx, &BatchCreatePoniesRequest{
+	resp, err := svc.BatchCreatePony(ctx, &BatchCreatePoniesRequest{
 		Requests: requests[:entproto.MaxBatchCreateSize],
 	})
 	require.NoError(t, err)
@@ -55,7 +55,7 @@ func TestPonyService_BatchCreate(t *testing.T) {
 	}
 
 	// Invalid batch size
-	resp, err = svc.BatchCreate(ctx, &BatchCreatePoniesRequest{
+	resp, err = svc.BatchCreatePony(ctx, &BatchCreatePoniesRequest{
 		Requests: requests,
 	})
 	require.Nil(t, resp)

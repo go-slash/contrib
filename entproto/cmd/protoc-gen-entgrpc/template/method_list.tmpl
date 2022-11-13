@@ -21,7 +21,8 @@
         if err != nil {
             return nil, status.Errorf(codes.InvalidArgument, "page token is invalid")
         }
-        {{- if .G.EntType.ID.IsInt }}
+
+        {{- if .G.EntType.ID.Type.Type.Integer }}
             token, err := {{ qualify "strconv" "ParseInt" }}(string(bytes), 10, 32)
             if err != nil {
                 return nil, status.Errorf(codes.InvalidArgument, "page token is invalid")

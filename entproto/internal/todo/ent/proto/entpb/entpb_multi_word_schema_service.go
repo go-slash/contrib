@@ -70,13 +70,14 @@ func toProtoMultiWordSchemaList(e []*ent.MultiWordSchema) ([]*MultiWordSchema, e
 	return pbList, nil
 }
 
-// Create implements MultiWordSchemaServiceServer.Create
-func (svc *MultiWordSchemaService) Create(ctx context.Context, req *CreateMultiWordSchemaRequest) (*MultiWordSchema, error) {
+// CreateMultiWordSchema implements MultiWordSchemaServiceServer.CreateMultiWordSchema
+func (svc *MultiWordSchemaService) CreateMultiWordSchema(ctx context.Context, req *CreateMultiWordSchemaRequest) (*MultiWordSchema, error) {
 	multiwordschema := req.GetMultiWordSchema()
-	m, err := svc.createBuilder(multiwordschema)
-	if err != nil {
-		return nil, err
-	}
+	multiwordschemaID := int(multiwordschema.GetId())
+	m := svc.client.MultiWordSchema.UpdateOneID(multiwordschemaID)
+	multiwordschemaUnit := toEntMultiWordSchema_Unit(multiwordschema.GetUnit())
+	m.SetUnit(multiwordschemaUnit)
+
 	res, err := m.Save(ctx)
 	switch {
 	case err == nil:
@@ -95,8 +96,8 @@ func (svc *MultiWordSchemaService) Create(ctx context.Context, req *CreateMultiW
 
 }
 
-// Get implements MultiWordSchemaServiceServer.Get
-func (svc *MultiWordSchemaService) Get(ctx context.Context, req *GetMultiWordSchemaRequest) (*MultiWordSchema, error) {
+// GetMultiWordSchema implements MultiWordSchemaServiceServer.GetMultiWordSchema
+func (svc *MultiWordSchemaService) GetMultiWordSchema(ctx context.Context, req *GetMultiWordSchemaRequest) (*MultiWordSchema, error) {
 	var (
 		err error
 		get *ent.MultiWordSchema
@@ -123,8 +124,8 @@ func (svc *MultiWordSchemaService) Get(ctx context.Context, req *GetMultiWordSch
 
 }
 
-// Update implements MultiWordSchemaServiceServer.Update
-func (svc *MultiWordSchemaService) Update(ctx context.Context, req *UpdateMultiWordSchemaRequest) (*MultiWordSchema, error) {
+// UpdateMultiWordSchema implements MultiWordSchemaServiceServer.UpdateMultiWordSchema
+func (svc *MultiWordSchemaService) UpdateMultiWordSchema(ctx context.Context, req *UpdateMultiWordSchemaRequest) (*MultiWordSchema, error) {
 	multiwordschema := req.GetMultiWordSchema()
 	multiwordschemaID := int(multiwordschema.GetId())
 	m := svc.client.MultiWordSchema.UpdateOneID(multiwordschemaID)
@@ -149,8 +150,8 @@ func (svc *MultiWordSchemaService) Update(ctx context.Context, req *UpdateMultiW
 
 }
 
-// Delete implements MultiWordSchemaServiceServer.Delete
-func (svc *MultiWordSchemaService) Delete(ctx context.Context, req *DeleteMultiWordSchemaRequest) (*emptypb.Empty, error) {
+// DeleteMultiWordSchema implements MultiWordSchemaServiceServer.DeleteMultiWordSchema
+func (svc *MultiWordSchemaService) DeleteMultiWordSchema(ctx context.Context, req *DeleteMultiWordSchemaRequest) (*emptypb.Empty, error) {
 	var err error
 	id := int(req.GetId())
 	err = svc.client.MultiWordSchema.DeleteOneID(id).Exec(ctx)
@@ -165,8 +166,8 @@ func (svc *MultiWordSchemaService) Delete(ctx context.Context, req *DeleteMultiW
 
 }
 
-// List implements MultiWordSchemaServiceServer.List
-func (svc *MultiWordSchemaService) List(ctx context.Context, req *ListMultiWordSchemaRequest) (*ListMultiWordSchemaResponse, error) {
+// ListMultiWordSchema implements MultiWordSchemaServiceServer.ListMultiWordSchema
+func (svc *MultiWordSchemaService) ListMultiWordSchema(ctx context.Context, req *ListMultiWordSchemaRequest) (*ListMultiWordSchemaResponse, error) {
 	var (
 		err      error
 		entList  []*ent.MultiWordSchema
@@ -224,8 +225,8 @@ func (svc *MultiWordSchemaService) List(ctx context.Context, req *ListMultiWordS
 
 }
 
-// BatchCreate implements MultiWordSchemaServiceServer.BatchCreate
-func (svc *MultiWordSchemaService) BatchCreate(ctx context.Context, req *BatchCreateMultiWordSchemasRequest) (*BatchCreateMultiWordSchemasResponse, error) {
+// BatchCreateMultiWordSchema implements MultiWordSchemaServiceServer.BatchCreateMultiWordSchema
+func (svc *MultiWordSchemaService) BatchCreateMultiWordSchema(ctx context.Context, req *BatchCreateMultiWordSchemasRequest) (*BatchCreateMultiWordSchemasResponse, error) {
 	requests := req.GetRequests()
 	if len(requests) > entproto.MaxBatchCreateSize {
 		return nil, status.Errorf(codes.InvalidArgument, "batch size cannot be greater than %d", entproto.MaxBatchCreateSize)

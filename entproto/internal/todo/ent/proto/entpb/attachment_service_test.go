@@ -39,14 +39,14 @@ func TestAttachmentService_Get(t *testing.T) {
 	id, err := attachment.ID.MarshalBinary()
 	require.NoError(t, err)
 
-	get, err := svc.Get(ctx, &GetAttachmentRequest{Id: id})
+	get, err := svc.GetAttachment(ctx, &GetAttachmentRequest{Id: id})
 	require.NoError(t, err)
 	require.EqualValues(t, get.Id, id)
 	respStatus, ok := status.FromError(err)
 	require.True(t, ok, "expected a gRPC status error")
 	require.EqualValues(t, respStatus.Code(), codes.OK)
 
-	get, err = svc.Get(ctx, &GetAttachmentRequest{Id: []byte("short")})
+	get, err = svc.GetAttachment(ctx, &GetAttachmentRequest{Id: []byte("short")})
 	require.Nil(t, get)
 	respStatus, ok = status.FromError(err)
 	require.True(t, ok, "expected a gRPC status error")
@@ -72,7 +72,7 @@ func TestAttachmentService_MultiEdge(t *testing.T) {
 			SetLabels(nil).
 			SaveX(ctx))
 	}
-	att, err := svc.Create(ctx, &CreateAttachmentRequest{Attachment: &Attachment{
+	att, err := svc.CreateAttachment(ctx, &CreateAttachmentRequest{Attachment: &Attachment{
 		User: &User{
 			Id: int64(users[0].ID),
 		},
@@ -90,7 +90,7 @@ func TestAttachmentService_MultiEdge(t *testing.T) {
 	require.Len(t, all, 1)
 	require.Len(t, all[0].Edges.Recipients, 4)
 
-	get, err := svc.Get(ctx, &GetAttachmentRequest{
+	get, err := svc.GetAttachment(ctx, &GetAttachmentRequest{
 		Id:   att.GetId(),
 		View: GetAttachmentRequest_WITH_EDGE_IDS,
 	})

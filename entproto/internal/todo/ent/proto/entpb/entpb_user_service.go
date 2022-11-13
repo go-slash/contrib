@@ -174,73 +174,8 @@ func toProtoUserList(e []*ent.User) ([]*User, error) {
 	return pbList, nil
 }
 
-// Create implements UserServiceServer.Create
-func (svc *UserService) Create(ctx context.Context, req *CreateUserRequest) (*User, error) {
-	user := req.GetUser()
-	m, err := svc.createBuilder(user)
-	if err != nil {
-		return nil, err
-	}
-	res, err := m.Save(ctx)
-	switch {
-	case err == nil:
-		proto, err := toProtoUser(res)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "internal error: %s", err)
-		}
-		return proto, nil
-	case sqlgraph.IsUniqueConstraintError(err):
-		return nil, status.Errorf(codes.AlreadyExists, "already exists: %s", err)
-	case ent.IsConstraintError(err):
-		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %s", err)
-	default:
-		return nil, status.Errorf(codes.Internal, "internal error: %s", err)
-	}
-
-}
-
-// Get implements UserServiceServer.Get
-func (svc *UserService) Get(ctx context.Context, req *GetUserRequest) (*User, error) {
-	var (
-		err error
-		get *ent.User
-	)
-	id := int(req.GetId())
-	switch req.GetView() {
-	case GetUserRequest_VIEW_UNSPECIFIED, GetUserRequest_BASIC:
-		get, err = svc.client.User.Get(ctx, id)
-	case GetUserRequest_WITH_EDGE_IDS:
-		get, err = svc.client.User.Query().
-			Where(user.ID(id)).
-			WithAttachment(func(query *ent.AttachmentQuery) {
-				query.Select(attachment.FieldID)
-			}).
-			WithGroup(func(query *ent.GroupQuery) {
-				query.Select(group.FieldID)
-			}).
-			WithPet(func(query *ent.PetQuery) {
-				query.Select(pet.FieldID)
-			}).
-			WithReceived1(func(query *ent.AttachmentQuery) {
-				query.Select(attachment.FieldID)
-			}).
-			Only(ctx)
-	default:
-		return nil, status.Error(codes.InvalidArgument, "invalid argument: unknown view")
-	}
-	switch {
-	case err == nil:
-		return toProtoUser(get)
-	case ent.IsNotFound(err):
-		return nil, status.Errorf(codes.NotFound, "not found: %s", err)
-	default:
-		return nil, status.Errorf(codes.Internal, "internal error: %s", err)
-	}
-
-}
-
-// Update implements UserServiceServer.Update
-func (svc *UserService) Update(ctx context.Context, req *UpdateUserRequest) (*User, error) {
+// CreateUser implements UserServiceServer.CreateUser
+func (svc *UserService) CreateUser(ctx context.Context, req *CreateUserRequest) (*User, error) {
 	user := req.GetUser()
 	userID := int(user.GetId())
 	m := svc.client.User.UpdateOneID(userID)
@@ -274,6 +209,8 @@ func (svc *UserService) Update(ctx context.Context, req *UpdateUserRequest) (*Us
 	m.SetExternalID(userExternalID)
 	userHeightInCm := float32(user.GetHeightInCm())
 	m.SetHeightInCm(userHeightInCm)
+	userJoined := runtime.ExtractTime(user.GetJoined())
+	m.SetJoined(userJoined)
 	if user.GetLabels() != nil {
 		userLabels := user.GetLabels()
 		m.SetLabels(userLabels)
@@ -341,8 +278,152 @@ func (svc *UserService) Update(ctx context.Context, req *UpdateUserRequest) (*Us
 
 }
 
-// Delete implements UserServiceServer.Delete
-func (svc *UserService) Delete(ctx context.Context, req *DeleteUserRequest) (*emptypb.Empty, error) {
+// GetUser implements UserServiceServer.GetUser
+func (svc *UserService) GetUser(ctx context.Context, req *GetUserRequest) (*User, error) {
+	var (
+		err error
+		get *ent.User
+	)
+	id := int(req.GetId())
+	switch req.GetView() {
+	case GetUserRequest_VIEW_UNSPECIFIED, GetUserRequest_BASIC:
+		get, err = svc.client.User.Get(ctx, id)
+	case GetUserRequest_WITH_EDGE_IDS:
+		get, err = svc.client.User.Query().
+			Where(user.ID(id)).
+			WithAttachment(func(query *ent.AttachmentQuery) {
+				query.Select(attachment.FieldID)
+			}).
+			WithGroup(func(query *ent.GroupQuery) {
+				query.Select(group.FieldID)
+			}).
+			WithPet(func(query *ent.PetQuery) {
+				query.Select(pet.FieldID)
+			}).
+			WithReceived1(func(query *ent.AttachmentQuery) {
+				query.Select(attachment.FieldID)
+			}).
+			Only(ctx)
+	default:
+		return nil, status.Error(codes.InvalidArgument, "invalid argument: unknown view")
+	}
+	switch {
+	case err == nil:
+		return toProtoUser(get)
+	case ent.IsNotFound(err):
+		return nil, status.Errorf(codes.NotFound, "not found: %s", err)
+	default:
+		return nil, status.Errorf(codes.Internal, "internal error: %s", err)
+	}
+
+}
+
+// UpdateUser implements UserServiceServer.UpdateUser
+func (svc *UserService) UpdateUser(ctx context.Context, req *UpdateUserRequest) (*User, error) {
+	user := req.GetUser()
+	userID := int(user.GetId())
+	m := svc.client.User.UpdateOneID(userID)
+	userAccountBalance := float64(user.GetAccountBalance())
+	m.SetAccountBalance(userAccountBalance)
+	if user.GetBUser_1() != nil {
+		userBUser1 := int(user.GetBUser_1().GetValue())
+		m.SetBUser1(userBUser1)
+	}
+	userBanned := user.GetBanned()
+	m.SetBanned(userBanned)
+	if user.GetBigInt() != nil {
+		userBigInt := schema.BigInt{}
+		if err := (&userBigInt).Scan(user.GetBigInt().GetValue()); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %s", err)
+		}
+		m.SetBigInt(userBigInt)
+	}
+	var userCrmID uuid.UUID
+	if err := (&userCrmID).UnmarshalBinary(user.GetCrmId()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %s", err)
+	}
+	m.SetCrmID(userCrmID)
+	userCustomPb := uint8(user.GetCustomPb())
+	m.SetCustomPb(userCustomPb)
+	userDeviceType := toEntUser_DeviceType(user.GetDeviceType())
+	m.SetDeviceType(userDeviceType)
+	userExp := uint64(user.GetExp())
+	m.SetExp(userExp)
+	userExternalID := int(user.GetExternalId())
+	m.SetExternalID(userExternalID)
+	userHeightInCm := float32(user.GetHeightInCm())
+	m.SetHeightInCm(userHeightInCm)
+	userJoined := runtime.ExtractTime(user.GetJoined())
+	m.SetJoined(userJoined)
+	if user.GetLabels() != nil {
+		userLabels := user.GetLabels()
+		m.SetLabels(userLabels)
+	}
+	if user.GetOptBool() != nil {
+		userOptBool := user.GetOptBool().GetValue()
+		m.SetOptBool(userOptBool)
+	}
+	if user.GetOptNum() != nil {
+		userOptNum := int(user.GetOptNum().GetValue())
+		m.SetOptNum(userOptNum)
+	}
+	if user.GetOptStr() != nil {
+		userOptStr := user.GetOptStr().GetValue()
+		m.SetOptStr(userOptStr)
+	}
+	userPoints := uint(user.GetPoints())
+	m.SetPoints(userPoints)
+	userStatus := toEntUser_Status(user.GetStatus())
+	m.SetStatus(userStatus)
+	if user.GetType() != nil {
+		userType := user.GetType().GetValue()
+		m.SetType(userType)
+	}
+	userUserName := user.GetUserName()
+	m.SetUserName(userUserName)
+	if user.GetAttachment() != nil {
+		var userAttachment uuid.UUID
+		if err := (&userAttachment).UnmarshalBinary(user.GetAttachment().GetId()); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %s", err)
+		}
+		m.SetAttachmentID(userAttachment)
+	}
+	if user.GetGroup() != nil {
+		userGroup := int(user.GetGroup().GetId())
+		m.SetGroupID(userGroup)
+	}
+	if user.GetPet() != nil {
+		userPet := int(user.GetPet().GetId())
+		m.SetPetID(userPet)
+	}
+	for _, item := range user.GetReceived_1() {
+		var received1 uuid.UUID
+		if err := (&received1).UnmarshalBinary(item.GetId()); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %s", err)
+		}
+		m.AddReceived1IDs(received1)
+	}
+
+	res, err := m.Save(ctx)
+	switch {
+	case err == nil:
+		proto, err := toProtoUser(res)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "internal error: %s", err)
+		}
+		return proto, nil
+	case sqlgraph.IsUniqueConstraintError(err):
+		return nil, status.Errorf(codes.AlreadyExists, "already exists: %s", err)
+	case ent.IsConstraintError(err):
+		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %s", err)
+	default:
+		return nil, status.Errorf(codes.Internal, "internal error: %s", err)
+	}
+
+}
+
+// DeleteUser implements UserServiceServer.DeleteUser
+func (svc *UserService) DeleteUser(ctx context.Context, req *DeleteUserRequest) (*emptypb.Empty, error) {
 	var err error
 	id := int(req.GetId())
 	err = svc.client.User.DeleteOneID(id).Exec(ctx)
@@ -357,8 +438,8 @@ func (svc *UserService) Delete(ctx context.Context, req *DeleteUserRequest) (*em
 
 }
 
-// List implements UserServiceServer.List
-func (svc *UserService) List(ctx context.Context, req *ListUserRequest) (*ListUserResponse, error) {
+// ListUser implements UserServiceServer.ListUser
+func (svc *UserService) ListUser(ctx context.Context, req *ListUserRequest) (*ListUserResponse, error) {
 	var (
 		err      error
 		entList  []*ent.User
@@ -428,8 +509,8 @@ func (svc *UserService) List(ctx context.Context, req *ListUserRequest) (*ListUs
 
 }
 
-// BatchCreate implements UserServiceServer.BatchCreate
-func (svc *UserService) BatchCreate(ctx context.Context, req *BatchCreateUsersRequest) (*BatchCreateUsersResponse, error) {
+// BatchCreateUser implements UserServiceServer.BatchCreateUser
+func (svc *UserService) BatchCreateUser(ctx context.Context, req *BatchCreateUsersRequest) (*BatchCreateUsersResponse, error) {
 	requests := req.GetRequests()
 	if len(requests) > entproto.MaxBatchCreateSize {
 		return nil, status.Errorf(codes.InvalidArgument, "batch size cannot be greater than %d", entproto.MaxBatchCreateSize)

@@ -131,6 +131,9 @@ func (g *serviceGenerator) generate() error {
 					Method: m,
 				}
 			},
+			"contains":  strings.Contains,
+			"hasPrefix": strings.HasPrefix,
+			"hasSuffix": strings.HasSuffix,
 		}).
 		ParseFS(templates, "template/*.tmpl")
 	if err != nil {
@@ -170,6 +173,25 @@ func extractEntTypeName(s *protogen.Service, g *gen.Graph) (*gen.Type, error) {
 	return nil, fmt.Errorf("entproto: type %q of service %q not found in graph", typeName, s.GoName)
 }
 
+//	func extractServiceBlockNameInAnnotation(sch *gen.Type) (string, error) {
+//		annot, ok := sch.Annotations["ProtoService"]
+//		if !ok {
+//			return "", fmt.Errorf("entproto: schema %q does not have an entproto.Service annotation", sch.Name)
+//		}
+//
+//		type service struct {
+//			Generate  bool
+//			BlockName string
+//		}
+//
+//		var out service
+//		err := mapstructure.Decode(annot, &out)
+//
+//		if err != nil {
+//			return "", fmt.Errorf("entproto: unable to decode entproto.Service annotation for schema %q: %w", sch.Name, err)
+//		}
+//		return out.BlockName, nil
+//	}
 func (g *serviceGenerator) entIdent(subpath string, ident string) protogen.GoIdent {
 	ip := path.Join(string(g.EntPackage), subpath)
 	return protogen.GoImportPath(ip).Ident(ident)

@@ -52,7 +52,7 @@
     {{- $methodName := .Method.GoName -}}
     {{- $reqVar := camel .G.EntType.Name -}}
     {{- range .G.FieldMap.Fields }}
-        {{- $skipImmutable := and ( eq $methodName "Update" ) .EntField.Immutable -}}
+        {{- $skipImmutable := and ( hasPrefix $methodName "Update" ) .EntField.Immutable -}}
         {{- $skip := or .IsIDField $skipImmutable -}}
         {{- if not $skip }}
             {{- $varName := camel (print $reqVar  "_"  .EntField.Name) -}}

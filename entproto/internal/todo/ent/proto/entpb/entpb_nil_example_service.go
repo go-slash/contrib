@@ -60,61 +60,8 @@ func toProtoNilExampleList(e []*ent.NilExample) ([]*NilExample, error) {
 	return pbList, nil
 }
 
-// Create implements NilExampleServiceServer.Create
-func (svc *NilExampleService) Create(ctx context.Context, req *CreateNilExampleRequest) (*NilExample, error) {
-	nilexample := req.GetNilExample()
-	m, err := svc.createBuilder(nilexample)
-	if err != nil {
-		return nil, err
-	}
-	res, err := m.Save(ctx)
-	switch {
-	case err == nil:
-		proto, err := toProtoNilExample(res)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "internal error: %s", err)
-		}
-		return proto, nil
-	case sqlgraph.IsUniqueConstraintError(err):
-		return nil, status.Errorf(codes.AlreadyExists, "already exists: %s", err)
-	case ent.IsConstraintError(err):
-		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %s", err)
-	default:
-		return nil, status.Errorf(codes.Internal, "internal error: %s", err)
-	}
-
-}
-
-// Get implements NilExampleServiceServer.Get
-func (svc *NilExampleService) Get(ctx context.Context, req *GetNilExampleRequest) (*NilExample, error) {
-	var (
-		err error
-		get *ent.NilExample
-	)
-	id := int(req.GetId())
-	switch req.GetView() {
-	case GetNilExampleRequest_VIEW_UNSPECIFIED, GetNilExampleRequest_BASIC:
-		get, err = svc.client.NilExample.Get(ctx, id)
-	case GetNilExampleRequest_WITH_EDGE_IDS:
-		get, err = svc.client.NilExample.Query().
-			Where(nilexample.ID(id)).
-			Only(ctx)
-	default:
-		return nil, status.Error(codes.InvalidArgument, "invalid argument: unknown view")
-	}
-	switch {
-	case err == nil:
-		return toProtoNilExample(get)
-	case ent.IsNotFound(err):
-		return nil, status.Errorf(codes.NotFound, "not found: %s", err)
-	default:
-		return nil, status.Errorf(codes.Internal, "internal error: %s", err)
-	}
-
-}
-
-// Update implements NilExampleServiceServer.Update
-func (svc *NilExampleService) Update(ctx context.Context, req *UpdateNilExampleRequest) (*NilExample, error) {
+// CreateNilExample implements NilExampleServiceServer.CreateNilExample
+func (svc *NilExampleService) CreateNilExample(ctx context.Context, req *CreateNilExampleRequest) (*NilExample, error) {
 	nilexample := req.GetNilExample()
 	nilexampleID := int(nilexample.GetId())
 	m := svc.client.NilExample.UpdateOneID(nilexampleID)
@@ -145,8 +92,68 @@ func (svc *NilExampleService) Update(ctx context.Context, req *UpdateNilExampleR
 
 }
 
-// Delete implements NilExampleServiceServer.Delete
-func (svc *NilExampleService) Delete(ctx context.Context, req *DeleteNilExampleRequest) (*emptypb.Empty, error) {
+// GetNilExample implements NilExampleServiceServer.GetNilExample
+func (svc *NilExampleService) GetNilExample(ctx context.Context, req *GetNilExampleRequest) (*NilExample, error) {
+	var (
+		err error
+		get *ent.NilExample
+	)
+	id := int(req.GetId())
+	switch req.GetView() {
+	case GetNilExampleRequest_VIEW_UNSPECIFIED, GetNilExampleRequest_BASIC:
+		get, err = svc.client.NilExample.Get(ctx, id)
+	case GetNilExampleRequest_WITH_EDGE_IDS:
+		get, err = svc.client.NilExample.Query().
+			Where(nilexample.ID(id)).
+			Only(ctx)
+	default:
+		return nil, status.Error(codes.InvalidArgument, "invalid argument: unknown view")
+	}
+	switch {
+	case err == nil:
+		return toProtoNilExample(get)
+	case ent.IsNotFound(err):
+		return nil, status.Errorf(codes.NotFound, "not found: %s", err)
+	default:
+		return nil, status.Errorf(codes.Internal, "internal error: %s", err)
+	}
+
+}
+
+// UpdateNilExample implements NilExampleServiceServer.UpdateNilExample
+func (svc *NilExampleService) UpdateNilExample(ctx context.Context, req *UpdateNilExampleRequest) (*NilExample, error) {
+	nilexample := req.GetNilExample()
+	nilexampleID := int(nilexample.GetId())
+	m := svc.client.NilExample.UpdateOneID(nilexampleID)
+	if nilexample.GetStrNil() != nil {
+		nilexampleStrNil := nilexample.GetStrNil().GetValue()
+		m.SetStrNil(nilexampleStrNil)
+	}
+	if nilexample.GetTimeNil() != nil {
+		nilexampleTimeNil := runtime.ExtractTime(nilexample.GetTimeNil())
+		m.SetTimeNil(nilexampleTimeNil)
+	}
+
+	res, err := m.Save(ctx)
+	switch {
+	case err == nil:
+		proto, err := toProtoNilExample(res)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "internal error: %s", err)
+		}
+		return proto, nil
+	case sqlgraph.IsUniqueConstraintError(err):
+		return nil, status.Errorf(codes.AlreadyExists, "already exists: %s", err)
+	case ent.IsConstraintError(err):
+		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %s", err)
+	default:
+		return nil, status.Errorf(codes.Internal, "internal error: %s", err)
+	}
+
+}
+
+// DeleteNilExample implements NilExampleServiceServer.DeleteNilExample
+func (svc *NilExampleService) DeleteNilExample(ctx context.Context, req *DeleteNilExampleRequest) (*emptypb.Empty, error) {
 	var err error
 	id := int(req.GetId())
 	err = svc.client.NilExample.DeleteOneID(id).Exec(ctx)
@@ -161,8 +168,8 @@ func (svc *NilExampleService) Delete(ctx context.Context, req *DeleteNilExampleR
 
 }
 
-// List implements NilExampleServiceServer.List
-func (svc *NilExampleService) List(ctx context.Context, req *ListNilExampleRequest) (*ListNilExampleResponse, error) {
+// ListNilExample implements NilExampleServiceServer.ListNilExample
+func (svc *NilExampleService) ListNilExample(ctx context.Context, req *ListNilExampleRequest) (*ListNilExampleResponse, error) {
 	var (
 		err      error
 		entList  []*ent.NilExample
@@ -220,8 +227,8 @@ func (svc *NilExampleService) List(ctx context.Context, req *ListNilExampleReque
 
 }
 
-// BatchCreate implements NilExampleServiceServer.BatchCreate
-func (svc *NilExampleService) BatchCreate(ctx context.Context, req *BatchCreateNilExamplesRequest) (*BatchCreateNilExamplesResponse, error) {
+// BatchCreateNilExample implements NilExampleServiceServer.BatchCreateNilExample
+func (svc *NilExampleService) BatchCreateNilExample(ctx context.Context, req *BatchCreateNilExamplesRequest) (*BatchCreateNilExamplesResponse, error) {
 	requests := req.GetRequests()
 	if len(requests) > entproto.MaxBatchCreateSize {
 		return nil, status.Errorf(codes.InvalidArgument, "batch size cannot be greater than %d", entproto.MaxBatchCreateSize)

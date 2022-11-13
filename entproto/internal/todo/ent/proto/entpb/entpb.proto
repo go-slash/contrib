@@ -436,75 +436,75 @@ message BatchCreateUsersResponse {
 }
 
 service AttachmentService {
-  rpc Create ( CreateAttachmentRequest ) returns ( Attachment );
+  rpc CreateAttachment ( CreateAttachmentRequest ) returns ( Attachment );
 
-  rpc Get ( GetAttachmentRequest ) returns ( Attachment );
+  rpc GetAttachment ( GetAttachmentRequest ) returns ( Attachment );
 
-  rpc Update ( UpdateAttachmentRequest ) returns ( Attachment );
+  rpc UpdateAttachment ( UpdateAttachmentRequest ) returns ( Attachment );
 
-  rpc Delete ( DeleteAttachmentRequest ) returns ( google.protobuf.Empty );
+  rpc DeleteAttachment ( DeleteAttachmentRequest ) returns ( google.protobuf.Empty );
 
-  rpc List ( ListAttachmentRequest ) returns ( ListAttachmentResponse );
+  rpc ListAttachment ( ListAttachmentRequest ) returns ( ListAttachmentResponse );
 
-  rpc BatchCreate ( BatchCreateAttachmentsRequest ) returns ( BatchCreateAttachmentsResponse );
+  rpc BatchCreateAttachment ( BatchCreateAttachmentsRequest ) returns ( BatchCreateAttachmentsResponse );
 }
 
 service MultiWordSchemaService {
-  rpc Create ( CreateMultiWordSchemaRequest ) returns ( MultiWordSchema );
+  rpc CreateMultiWordSchema ( CreateMultiWordSchemaRequest ) returns ( MultiWordSchema );
 
-  rpc Get ( GetMultiWordSchemaRequest ) returns ( MultiWordSchema );
+  rpc GetMultiWordSchema ( GetMultiWordSchemaRequest ) returns ( MultiWordSchema );
 
-  rpc Update ( UpdateMultiWordSchemaRequest ) returns ( MultiWordSchema );
+  rpc UpdateMultiWordSchema ( UpdateMultiWordSchemaRequest ) returns ( MultiWordSchema );
 
-  rpc Delete ( DeleteMultiWordSchemaRequest ) returns ( google.protobuf.Empty );
+  rpc DeleteMultiWordSchema ( DeleteMultiWordSchemaRequest ) returns ( google.protobuf.Empty );
 
-  rpc List ( ListMultiWordSchemaRequest ) returns ( ListMultiWordSchemaResponse );
+  rpc ListMultiWordSchema ( ListMultiWordSchemaRequest ) returns ( ListMultiWordSchemaResponse );
 
-  rpc BatchCreate ( BatchCreateMultiWordSchemasRequest ) returns ( BatchCreateMultiWordSchemasResponse );
+  rpc BatchCreateMultiWordSchema ( BatchCreateMultiWordSchemasRequest ) returns ( BatchCreateMultiWordSchemasResponse );
 }
 
 service NilExampleService {
-  rpc Create ( CreateNilExampleRequest ) returns ( NilExample );
+  rpc CreateNilExample ( CreateNilExampleRequest ) returns ( NilExample );
 
-  rpc Get ( GetNilExampleRequest ) returns ( NilExample );
+  rpc GetNilExample ( GetNilExampleRequest ) returns ( NilExample );
 
-  rpc Update ( UpdateNilExampleRequest ) returns ( NilExample );
+  rpc UpdateNilExample ( UpdateNilExampleRequest ) returns ( NilExample );
 
-  rpc Delete ( DeleteNilExampleRequest ) returns ( google.protobuf.Empty );
+  rpc DeleteNilExample ( DeleteNilExampleRequest ) returns ( google.protobuf.Empty );
 
-  rpc List ( ListNilExampleRequest ) returns ( ListNilExampleResponse );
+  rpc ListNilExample ( ListNilExampleRequest ) returns ( ListNilExampleResponse );
 
-  rpc BatchCreate ( BatchCreateNilExamplesRequest ) returns ( BatchCreateNilExamplesResponse );
+  rpc BatchCreateNilExample ( BatchCreateNilExamplesRequest ) returns ( BatchCreateNilExamplesResponse );
 }
 
 service PetService {
-  rpc Create ( CreatePetRequest ) returns ( Pet );
+  rpc CreatePet ( CreatePetRequest ) returns ( Pet );
 
-  rpc Get ( GetPetRequest ) returns ( Pet );
+  rpc GetPet ( GetPetRequest ) returns ( Pet );
 
-  rpc Update ( UpdatePetRequest ) returns ( Pet );
+  rpc UpdatePet ( UpdatePetRequest ) returns ( Pet );
 
-  rpc Delete ( DeletePetRequest ) returns ( google.protobuf.Empty );
+  rpc DeletePet ( DeletePetRequest ) returns ( google.protobuf.Empty );
 
-  rpc List ( ListPetRequest ) returns ( ListPetResponse );
+  rpc ListPet ( ListPetRequest ) returns ( ListPetResponse );
 
-  rpc BatchCreate ( BatchCreatePetsRequest ) returns ( BatchCreatePetsResponse );
+  rpc BatchCreatePet ( BatchCreatePetsRequest ) returns ( BatchCreatePetsResponse );
 }
 
 service PonyService {
-  rpc BatchCreate ( BatchCreatePoniesRequest ) returns ( BatchCreatePoniesResponse );
+  rpc BatchCreatePony ( BatchCreatePoniesRequest ) returns ( BatchCreatePoniesResponse );
 }
 
 service UserService {
-  rpc Create ( CreateUserRequest ) returns ( User );
+  rpc CreateUser ( CreateUserRequest ) returns ( User );
 
-  rpc Get ( GetUserRequest ) returns ( User );
+  rpc GetUser ( GetUserRequest ) returns ( User );
 
-  rpc Update ( UpdateUserRequest ) returns ( User );
+  rpc UpdateUser ( UpdateUserRequest ) returns ( User );
 
-  rpc Delete ( DeleteUserRequest ) returns ( google.protobuf.Empty );
+  rpc DeleteUser ( DeleteUserRequest ) returns ( google.protobuf.Empty );
 
-  rpc List ( ListUserRequest ) returns ( ListUserResponse );
+  rpc ListUser ( ListUserRequest ) returns ( ListUserResponse );
 
-  rpc BatchCreate ( BatchCreateUsersRequest ) returns ( BatchCreateUsersResponse );
+  rpc BatchCreateUser ( BatchCreateUsersRequest ) returns ( BatchCreateUsersResponse );
 }

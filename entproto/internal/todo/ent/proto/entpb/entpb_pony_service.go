@@ -46,8 +46,8 @@ func toProtoPonyList(e []*ent.Pony) ([]*Pony, error) {
 	return pbList, nil
 }
 
-// BatchCreate implements PonyServiceServer.BatchCreate
-func (svc *PonyService) BatchCreate(ctx context.Context, req *BatchCreatePoniesRequest) (*BatchCreatePoniesResponse, error) {
+// BatchCreatePony implements PonyServiceServer.BatchCreatePony
+func (svc *PonyService) BatchCreatePony(ctx context.Context, req *BatchCreatePoniesRequest) (*BatchCreatePoniesResponse, error) {
 	requests := req.GetRequests()
 	if len(requests) > entproto.MaxBatchCreateSize {
 		return nil, status.Errorf(codes.InvalidArgument, "batch size cannot be greater than %d", entproto.MaxBatchCreateSize)

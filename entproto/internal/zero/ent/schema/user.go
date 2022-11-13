@@ -16,6 +16,10 @@ type User struct {
 // Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
+		field.Uint64("id").
+			Unique().
+			Annotations(entproto.Field(1)),
+
 		field.String("user_name").
 			Unique().
 			Annotations(entproto.Field(2)),

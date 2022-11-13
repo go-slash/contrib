@@ -65,13 +65,23 @@ func toProtoAttachmentList(e []*ent.Attachment) ([]*Attachment, error) {
 	return pbList, nil
 }
 
-// Create implements AttachmentServiceServer.Create
-func (svc *AttachmentService) Create(ctx context.Context, req *CreateAttachmentRequest) (*Attachment, error) {
+// CreateAttachment implements AttachmentServiceServer.CreateAttachment
+func (svc *AttachmentService) CreateAttachment(ctx context.Context, req *CreateAttachmentRequest) (*Attachment, error) {
 	attachment := req.GetAttachment()
-	m, err := svc.createBuilder(attachment)
-	if err != nil {
-		return nil, err
+	var attachmentID uuid.UUID
+	if err := (&attachmentID).UnmarshalBinary(attachment.GetId()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %s", err)
 	}
+	m := svc.client.Attachment.UpdateOneID(attachmentID)
+	for _, item := range attachment.GetRecipients() {
+		recipients := int(item.GetId())
+		m.AddRecipientIDs(recipients)
+	}
+	if attachment.GetUser() != nil {
+		attachmentUser := int(attachment.GetUser().GetId())
+		m.SetUserID(attachmentUser)
+	}
+
 	res, err := m.Save(ctx)
 	switch {
 	case err == nil:
@@ -90,8 +100,8 @@ func (svc *AttachmentService) Create(ctx context.Context, req *CreateAttachmentR
 
 }
 
-// Get implements AttachmentServiceServer.Get
-func (svc *AttachmentService) Get(ctx context.Context, req *GetAttachmentRequest) (*Attachment, error) {
+// GetAttachment implements AttachmentServiceServer.GetAttachment
+func (svc *AttachmentService) GetAttachment(ctx context.Context, req *GetAttachmentRequest) (*Attachment, error) {
 	var (
 		err error
 		get *ent.Attachment
@@ -127,8 +137,8 @@ func (svc *AttachmentService) Get(ctx context.Context, req *GetAttachmentRequest
 
 }
 
-// Update implements AttachmentServiceServer.Update
-func (svc *AttachmentService) Update(ctx context.Context, req *UpdateAttachmentRequest) (*Attachment, error) {
+// UpdateAttachment implements AttachmentServiceServer.UpdateAttachment
+func (svc *AttachmentService) UpdateAttachment(ctx context.Context, req *UpdateAttachmentRequest) (*Attachment, error) {
 	attachment := req.GetAttachment()
 	var attachmentID uuid.UUID
 	if err := (&attachmentID).UnmarshalBinary(attachment.GetId()); err != nil {
@@ -162,8 +172,8 @@ func (svc *AttachmentService) Update(ctx context.Context, req *UpdateAttachmentR
 
 }
 
-// Delete implements AttachmentServiceServer.Delete
-func (svc *AttachmentService) Delete(ctx context.Context, req *DeleteAttachmentRequest) (*emptypb.Empty, error) {
+// DeleteAttachment implements AttachmentServiceServer.DeleteAttachment
+func (svc *AttachmentService) DeleteAttachment(ctx context.Context, req *DeleteAttachmentRequest) (*emptypb.Empty, error) {
 	var err error
 	var id uuid.UUID
 	if err := (&id).UnmarshalBinary(req.GetId()); err != nil {
@@ -181,8 +191,8 @@ func (svc *AttachmentService) Delete(ctx context.Context, req *DeleteAttachmentR
 
 }
 
-// List implements AttachmentServiceServer.List
-func (svc *AttachmentService) List(ctx context.Context, req *ListAttachmentRequest) (*ListAttachmentResponse, error) {
+// ListAttachment implements AttachmentServiceServer.ListAttachment
+func (svc *AttachmentService) ListAttachment(ctx context.Context, req *ListAttachmentRequest) (*ListAttachmentResponse, error) {
 	var (
 		err      error
 		entList  []*ent.Attachment
@@ -245,8 +255,8 @@ func (svc *AttachmentService) List(ctx context.Context, req *ListAttachmentReque
 
 }
 
-// BatchCreate implements AttachmentServiceServer.BatchCreate
-func (svc *AttachmentService) BatchCreate(ctx context.Context, req *BatchCreateAttachmentsRequest) (*BatchCreateAttachmentsResponse, error) {
+// BatchCreateAttachment implements AttachmentServiceServer.BatchCreateAttachment
+func (svc *AttachmentService) BatchCreateAttachment(ctx context.Context, req *BatchCreateAttachmentsRequest) (*BatchCreateAttachmentsResponse, error) {
 	requests := req.GetRequests()
 	if len(requests) > entproto.MaxBatchCreateSize {
 		return nil, status.Errorf(codes.InvalidArgument, "batch size cannot be greater than %d", entproto.MaxBatchCreateSize)

@@ -67,67 +67,8 @@ func toProtoPetList(e []*ent.Pet) ([]*Pet, error) {
 	return pbList, nil
 }
 
-// Create implements PetServiceServer.Create
-func (svc *PetService) Create(ctx context.Context, req *CreatePetRequest) (*Pet, error) {
-	pet := req.GetPet()
-	m, err := svc.createBuilder(pet)
-	if err != nil {
-		return nil, err
-	}
-	res, err := m.Save(ctx)
-	switch {
-	case err == nil:
-		proto, err := toProtoPet(res)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "internal error: %s", err)
-		}
-		return proto, nil
-	case sqlgraph.IsUniqueConstraintError(err):
-		return nil, status.Errorf(codes.AlreadyExists, "already exists: %s", err)
-	case ent.IsConstraintError(err):
-		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %s", err)
-	default:
-		return nil, status.Errorf(codes.Internal, "internal error: %s", err)
-	}
-
-}
-
-// Get implements PetServiceServer.Get
-func (svc *PetService) Get(ctx context.Context, req *GetPetRequest) (*Pet, error) {
-	var (
-		err error
-		get *ent.Pet
-	)
-	id := int(req.GetId())
-	switch req.GetView() {
-	case GetPetRequest_VIEW_UNSPECIFIED, GetPetRequest_BASIC:
-		get, err = svc.client.Pet.Get(ctx, id)
-	case GetPetRequest_WITH_EDGE_IDS:
-		get, err = svc.client.Pet.Query().
-			Where(pet.ID(id)).
-			WithAttachment(func(query *ent.AttachmentQuery) {
-				query.Select(attachment.FieldID)
-			}).
-			WithOwner(func(query *ent.UserQuery) {
-				query.Select(user.FieldID)
-			}).
-			Only(ctx)
-	default:
-		return nil, status.Error(codes.InvalidArgument, "invalid argument: unknown view")
-	}
-	switch {
-	case err == nil:
-		return toProtoPet(get)
-	case ent.IsNotFound(err):
-		return nil, status.Errorf(codes.NotFound, "not found: %s", err)
-	default:
-		return nil, status.Errorf(codes.Internal, "internal error: %s", err)
-	}
-
-}
-
-// Update implements PetServiceServer.Update
-func (svc *PetService) Update(ctx context.Context, req *UpdatePetRequest) (*Pet, error) {
+// CreatePet implements PetServiceServer.CreatePet
+func (svc *PetService) CreatePet(ctx context.Context, req *CreatePetRequest) (*Pet, error) {
 	pet := req.GetPet()
 	petID := int(pet.GetId())
 	m := svc.client.Pet.UpdateOneID(petID)
@@ -161,8 +102,77 @@ func (svc *PetService) Update(ctx context.Context, req *UpdatePetRequest) (*Pet,
 
 }
 
-// Delete implements PetServiceServer.Delete
-func (svc *PetService) Delete(ctx context.Context, req *DeletePetRequest) (*emptypb.Empty, error) {
+// GetPet implements PetServiceServer.GetPet
+func (svc *PetService) GetPet(ctx context.Context, req *GetPetRequest) (*Pet, error) {
+	var (
+		err error
+		get *ent.Pet
+	)
+	id := int(req.GetId())
+	switch req.GetView() {
+	case GetPetRequest_VIEW_UNSPECIFIED, GetPetRequest_BASIC:
+		get, err = svc.client.Pet.Get(ctx, id)
+	case GetPetRequest_WITH_EDGE_IDS:
+		get, err = svc.client.Pet.Query().
+			Where(pet.ID(id)).
+			WithAttachment(func(query *ent.AttachmentQuery) {
+				query.Select(attachment.FieldID)
+			}).
+			WithOwner(func(query *ent.UserQuery) {
+				query.Select(user.FieldID)
+			}).
+			Only(ctx)
+	default:
+		return nil, status.Error(codes.InvalidArgument, "invalid argument: unknown view")
+	}
+	switch {
+	case err == nil:
+		return toProtoPet(get)
+	case ent.IsNotFound(err):
+		return nil, status.Errorf(codes.NotFound, "not found: %s", err)
+	default:
+		return nil, status.Errorf(codes.Internal, "internal error: %s", err)
+	}
+
+}
+
+// UpdatePet implements PetServiceServer.UpdatePet
+func (svc *PetService) UpdatePet(ctx context.Context, req *UpdatePetRequest) (*Pet, error) {
+	pet := req.GetPet()
+	petID := int(pet.GetId())
+	m := svc.client.Pet.UpdateOneID(petID)
+	for _, item := range pet.GetAttachment() {
+		var attachment uuid.UUID
+		if err := (&attachment).UnmarshalBinary(item.GetId()); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %s", err)
+		}
+		m.AddAttachmentIDs(attachment)
+	}
+	if pet.GetOwner() != nil {
+		petOwner := int(pet.GetOwner().GetId())
+		m.SetOwnerID(petOwner)
+	}
+
+	res, err := m.Save(ctx)
+	switch {
+	case err == nil:
+		proto, err := toProtoPet(res)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "internal error: %s", err)
+		}
+		return proto, nil
+	case sqlgraph.IsUniqueConstraintError(err):
+		return nil, status.Errorf(codes.AlreadyExists, "already exists: %s", err)
+	case ent.IsConstraintError(err):
+		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %s", err)
+	default:
+		return nil, status.Errorf(codes.Internal, "internal error: %s", err)
+	}
+
+}
+
+// DeletePet implements PetServiceServer.DeletePet
+func (svc *PetService) DeletePet(ctx context.Context, req *DeletePetRequest) (*emptypb.Empty, error) {
 	var err error
 	id := int(req.GetId())
 	err = svc.client.Pet.DeleteOneID(id).Exec(ctx)
@@ -177,8 +187,8 @@ func (svc *PetService) Delete(ctx context.Context, req *DeletePetRequest) (*empt
 
 }
 
-// List implements PetServiceServer.List
-func (svc *PetService) List(ctx context.Context, req *ListPetRequest) (*ListPetResponse, error) {
+// ListPet implements PetServiceServer.ListPet
+func (svc *PetService) ListPet(ctx context.Context, req *ListPetRequest) (*ListPetResponse, error) {
 	var (
 		err      error
 		entList  []*ent.Pet
@@ -242,8 +252,8 @@ func (svc *PetService) List(ctx context.Context, req *ListPetRequest) (*ListPetR
 
 }
 
-// BatchCreate implements PetServiceServer.BatchCreate
-func (svc *PetService) BatchCreate(ctx context.Context, req *BatchCreatePetsRequest) (*BatchCreatePetsResponse, error) {
+// BatchCreatePet implements PetServiceServer.BatchCreatePet
+func (svc *PetService) BatchCreatePet(ctx context.Context, req *BatchCreatePetsRequest) (*BatchCreatePetsResponse, error) {
 	requests := req.GetRequests()
 	if len(requests) > entproto.MaxBatchCreateSize {
 		return nil, status.Errorf(codes.InvalidArgument, "batch size cannot be greater than %d", entproto.MaxBatchCreateSize)
