@@ -65,9 +65,17 @@ func Methods(methods Method) ServiceOption {
 	}
 }
 
+// BlockName specifies the name of the block to use for the entproto.Service.
+func BlockName(name string) ServiceOption {
+	return func(s *service) {
+		s.BlockName = name
+	}
+}
+
 type service struct {
-	Generate bool
-	Methods  Method
+	Generate  bool
+	Methods   Method
+	BlockName string
 }
 
 func (service) Name() string {
@@ -92,9 +100,13 @@ func Service(opts ...ServiceOption) schema.Annotation {
 	return s
 }
 
-func (a *Adapter) createServiceResources(genType *gen.Type, methods Method) (serviceResources, error) {
+func (a *Adapter) createServiceResources(genType *gen.Type, methods Method, blockName string) (serviceResources, error) {
 	name := genType.Name
 	serviceFqn := fmt.Sprintf("%sService", name)
+
+	if blockName != "" {
+		serviceFqn = blockName
+	}
 
 	out := serviceResources{
 		svc: &descriptorpb.ServiceDescriptorProto{
@@ -149,7 +161,7 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 	)
 	switch m {
 	case MethodGet:
-		methodName = "Get"
+		methodName = fmt.Sprintf("Get%s", genType.Name)
 		input.Name = strptr(fmt.Sprintf("Get%sRequest", genType.Name))
 		input.Field = []*descriptorpb.FieldDescriptorProto{
 			idField,
@@ -171,19 +183,19 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 		outputName = genType.Name
 		messages = append(messages, input)
 	case MethodCreate:
-		methodName = "Create"
+		methodName = fmt.Sprintf("Create%s", genType.Name)
 		input.Name = strptr(fmt.Sprintf("Create%sRequest", genType.Name))
 		input.Field = []*descriptorpb.FieldDescriptorProto{singleMessageField}
 		outputName = genType.Name
 		messages = append(messages, input)
 	case MethodUpdate:
-		methodName = "Update"
+		methodName = fmt.Sprintf("Update%s", genType.Name)
 		input.Name = strptr(fmt.Sprintf("Update%sRequest", genType.Name))
 		input.Field = []*descriptorpb.FieldDescriptorProto{singleMessageField}
 		outputName = genType.Name
 		messages = append(messages, input)
 	case MethodDelete:
-		methodName = "Delete"
+		methodName = fmt.Sprintf("Delete%s", genType.Name)
 		input.Name = strptr(fmt.Sprintf("Delete%sRequest", genType.Name))
 		input.Field = []*descriptorpb.FieldDescriptorProto{idField}
 		outputName = "google.protobuf.Empty"
@@ -193,8 +205,7 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 			return methodResources{}, fmt.Errorf("entproto: list method does not support schema %q id type %q",
 				genType.Name, genType.ID.Type.String())
 		}
-
-		methodName = "List"
+		methodName = fmt.Sprintf("List%s", genType.Name)
 		int32FieldType := descriptorpb.FieldDescriptorProto_TYPE_INT32
 		stringFieldType := descriptorpb.FieldDescriptorProto_TYPE_STRING
 		input.Name = strptr(fmt.Sprintf("List%sRequest", genType.Name))
@@ -244,7 +255,7 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 		}
 		messages = append(messages, input, output)
 	case MethodBatchCreate:
-		methodName = "BatchCreate"
+		methodName = fmt.Sprintf("BatchCreate%s", genType.Name)
 		createRequest := &descriptorpb.DescriptorProto{}
 		createRequest.Name = strptr(fmt.Sprintf("Create%sRequest", genType.Name))
 		createRequest.Field = []*descriptorpb.FieldDescriptorProto{singleMessageField}

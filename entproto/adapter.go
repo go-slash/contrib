@@ -148,11 +148,20 @@ func (a *Adapter) parse() error {
 			return err
 		}
 		if svcAnnotation.Generate {
-			svcResources, err := a.createServiceResources(genType, svcAnnotation.Methods)
+			svcResources, err := a.createServiceResources(genType, svcAnnotation.Methods, svcAnnotation.BlockName)
 			if err != nil {
 				return err
 			}
-			fd.Service = append(fd.Service, svcResources.svc)
+			if len(fd.Service) == 0 {
+				fd.Service = append(fd.Service, svcResources.svc)
+			} else {
+				for _, svc := range fd.Service {
+					if svc.GetName() == svcResources.svc.GetName() {
+						svc.Method = append(svc.Method, svcResources.svc.Method...)
+						break
+					}
+				}
+			}
 			fd.MessageType = append(fd.MessageType, svcResources.svcMessages...)
 			fd.Dependency = append(fd.Dependency, "google/protobuf/empty.proto")
 		}
