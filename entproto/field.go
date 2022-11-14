@@ -36,9 +36,10 @@ func Field(num int, options ...FieldOption) schema.Annotation {
 }
 
 type pbfield struct {
-	Number   int
-	Type     descriptorpb.FieldDescriptorProto_Type
-	TypeName string
+	Number    int
+	Type      descriptorpb.FieldDescriptorProto_Type
+	TypeName  string
+	FieldName string
 }
 
 func (f pbfield) Name() string {
@@ -47,6 +48,7 @@ func (f pbfield) Name() string {
 
 // Type overrides the default mapping between ent types and protobuf types.
 // Example:
+//
 //	field.Uint8("custom_pb").
 //		Annotations(
 //			entproto.Field(2,
@@ -63,6 +65,13 @@ func Type(typ descriptorpb.FieldDescriptorProto_Type) FieldOption {
 func TypeName(n string) FieldOption {
 	return func(p *pbfield) {
 		p.TypeName = n
+	}
+}
+
+// FieldName sets the pb descriptors type name, needed if the Type attribute is TYPE_ENUM or TYPE_MESSAGE.
+func FieldName(n string) FieldOption {
+	return func(p *pbfield) {
+		p.FieldName = n
 	}
 }
 

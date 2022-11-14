@@ -36,7 +36,7 @@ type PetMutation struct {
 	typ           string
 	id            *int
 	clearedFields map[string]struct{}
-	owner         *int
+	owner         *uint64
 	clearedowner  bool
 	done          bool
 	oldValue      func(context.Context) (*Pet, error)
@@ -142,7 +142,7 @@ func (m *PetMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetOwnerID sets the "owner" edge to the User entity by id.
-func (m *PetMutation) SetOwnerID(id int) {
+func (m *PetMutation) SetOwnerID(id uint64) {
 	m.owner = &id
 }
 
@@ -157,7 +157,7 @@ func (m *PetMutation) OwnerCleared() bool {
 }
 
 // OwnerID returns the "owner" edge ID in the mutation.
-func (m *PetMutation) OwnerID() (id int, exists bool) {
+func (m *PetMutation) OwnerID() (id uint64, exists bool) {
 	if m.owner != nil {
 		return *m.owner, true
 	}
@@ -167,7 +167,7 @@ func (m *PetMutation) OwnerID() (id int, exists bool) {
 // OwnerIDs returns the "owner" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // OwnerID instead. It exists only for internal usage by the builders.
-func (m *PetMutation) OwnerIDs() (ids []int) {
+func (m *PetMutation) OwnerIDs() (ids []uint64) {
 	if id := m.owner; id != nil {
 		ids = append(ids, *id)
 	}
@@ -350,7 +350,7 @@ type UserMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *int
+	id            *uint64
 	user_name     *string
 	joined        *time.Time
 	points        *uint
@@ -386,7 +386,7 @@ func newUserMutation(c config, op Op, opts ...userOption) *UserMutation {
 }
 
 // withUserID sets the ID field of the mutation.
-func withUserID(id int) userOption {
+func withUserID(id uint64) userOption {
 	return func(m *UserMutation) {
 		var (
 			err   error
@@ -436,9 +436,15 @@ func (m UserMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of User entities.
+func (m *UserMutation) SetID(id uint64) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *UserMutation) ID() (id int, exists bool) {
+func (m *UserMutation) ID() (id uint64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -449,12 +455,12 @@ func (m *UserMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *UserMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *UserMutation) IDs(ctx context.Context) ([]uint64, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []uint64{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):

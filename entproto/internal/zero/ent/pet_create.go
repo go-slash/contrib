@@ -20,13 +20,13 @@ type PetCreate struct {
 }
 
 // SetOwnerID sets the "owner" edge to the User entity by ID.
-func (pc *PetCreate) SetOwnerID(id int) *PetCreate {
+func (pc *PetCreate) SetOwnerID(id uint64) *PetCreate {
 	pc.mutation.SetOwnerID(id)
 	return pc
 }
 
 // SetNillableOwnerID sets the "owner" edge to the User entity by ID if the given value is not nil.
-func (pc *PetCreate) SetNillableOwnerID(id *int) *PetCreate {
+func (pc *PetCreate) SetNillableOwnerID(id *uint64) *PetCreate {
 	if id != nil {
 		pc = pc.SetOwnerID(*id)
 	}
@@ -150,7 +150,7 @@ func (pc *PetCreate) createSpec() (*Pet, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUint64,
 					Column: user.FieldID,
 				},
 			},

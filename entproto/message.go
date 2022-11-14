@@ -33,6 +33,7 @@ func Message(opts ...MessageOption) schema.Annotation {
 		Generate: true,
 		Package:  "entpb",
 	}
+	m.SkipID = true
 	for _, apply := range opts {
 		apply(&m)
 	}
@@ -56,8 +57,14 @@ func PackageName(pkg string) MessageOption {
 }
 
 type message struct {
-	Generate bool
-	Package  string
+	messageProto
+	Generate      bool
+	Package       string
+	NamedMessages []*namedMessage
+}
+
+type messageProto struct {
+	SkipID bool
 }
 
 func (m message) Name() string {

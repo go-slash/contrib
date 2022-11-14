@@ -11,7 +11,7 @@ var (
 	// PetsColumns holds the columns for the "pets" table.
 	PetsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "user_pet", Type: field.TypeInt, Unique: true, Nullable: true},
+		{Name: "user_pet", Type: field.TypeUint64, Unique: true, Nullable: true},
 	}
 	// PetsTable holds the schema information for the "pets" table.
 	PetsTable = &schema.Table{
@@ -29,7 +29,7 @@ var (
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeUint64, Increment: true},
 		{Name: "user_name", Type: field.TypeString, Unique: true},
 		{Name: "joined", Type: field.TypeTime},
 		{Name: "points", Type: field.TypeUint},
