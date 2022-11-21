@@ -72,10 +72,34 @@ func BlockName(name string) ServiceOption {
 	}
 }
 
+func ExtraMethod(name string, input []PbField, output []PbField) ServiceOption {
+	return func(s *service) {
+		s.ExtraMethods = append(s.ExtraMethods, &extraMethodDef{
+			Name:         name,
+			InputFields:  input,
+			OutputFields: output,
+		})
+	}
+}
+
+func ExtraMethodInput(fields ...PbField) []PbField {
+	return fields
+}
+func ExtraMethodOutput(fields ...PbField) []PbField {
+	return fields
+}
+
+type extraMethodDef struct {
+	Name         string
+	InputFields  []pbfield
+	OutputFields []pbfield
+}
+
 type service struct {
-	Generate  bool
-	Methods   Method
-	BlockName string
+	Generate     bool
+	Methods      Method
+	BlockName    string
+	ExtraMethods []*extraMethodDef
 }
 
 func (service) Name() string {
@@ -100,7 +124,7 @@ func Service(opts ...ServiceOption) schema.Annotation {
 	return s
 }
 
-func (a *Adapter) createServiceResources(genType *gen.Type, methods Method, blockName string) (serviceResources, error) {
+func (a *Adapter) createServiceResources(genType *gen.Type, methods Method, blockName string, extraMethods []*extraMethodDef) (serviceResources, error) {
 	name := genType.Name
 	serviceFqn := fmt.Sprintf("%sService", name)
 
@@ -126,12 +150,88 @@ func (a *Adapter) createServiceResources(genType *gen.Type, methods Method, bloc
 		out.svc.Method = append(out.svc.Method, resources.methodDescriptor)
 		out.svcMessages = append(out.svcMessages, resources.messages...)
 	}
+
+	for _, m := range extraMethods {
+		resources, err := a.genExtraMethodProtos(m)
+		if err != nil {
+			return serviceResources{}, err
+		}
+		out.svc.Method = append(out.svc.Method, resources.methodDescriptor)
+		out.svcMessages = append(out.svcMessages, resources.messages...)
+	}
+
 	out.svcMessages = dedupeServiceMessages(out.svcMessages)
 
 	return out, nil
 }
 
 var plural = gen.Funcs["plural"].(func(string) string)
+
+func (a *Adapter) genExtraMethodProtos(m *extraMethodDef) (methodResources, error) {
+	var messages []*descriptorpb.DescriptorProto
+	var inputTypeName = fmt.Sprintf("%sRequest", m.Name)
+	var outputTypeName = fmt.Sprintf("%sResponse", m.Name)
+
+	var input = &descriptorpb.DescriptorProto{
+		Name:  &inputTypeName,
+		Field: []*descriptorpb.FieldDescriptorProto{},
+	}
+	var output = &descriptorpb.DescriptorProto{
+		Name:  &outputTypeName,
+		Field: []*descriptorpb.FieldDescriptorProto{},
+	}
+
+	for _, f := range m.InputFields {
+		item := &descriptorpb.FieldDescriptorProto{
+			Name:   strptr(f.FieldName),
+			Number: int32ptr(int32(f.Number)),
+		}
+
+		if f.TypeName != "" {
+			item.TypeName = strptr(f.TypeName)
+			item.Type = descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum()
+		} else {
+			item.Type = &f.Type
+		}
+
+		if f.Repeated {
+			item.Label = descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum()
+		}
+
+		input.Field = append(input.Field, item)
+	}
+
+	for _, f := range m.OutputFields {
+		item := &descriptorpb.FieldDescriptorProto{
+			Name:   strptr(f.FieldName),
+			Number: int32ptr(int32(f.Number)),
+		}
+
+		if f.TypeName != "" {
+			item.TypeName = strptr(f.TypeName)
+			item.Type = descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum()
+		} else {
+			item.Type = &f.Type
+		}
+
+		if f.Repeated {
+			item.Label = descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum()
+		}
+
+		output.Field = append(output.Field, item)
+	}
+
+	messages = append(messages, input, output)
+
+	return methodResources{
+		methodDescriptor: &descriptorpb.MethodDescriptorProto{
+			Name:       &m.Name,
+			InputType:  strptr(inputTypeName),
+			OutputType: strptr(outputTypeName),
+		},
+		messages: messages,
+	}, nil
+}
 
 func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources, error) {
 	input := &descriptorpb.DescriptorProto{}

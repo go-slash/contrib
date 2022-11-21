@@ -159,13 +159,16 @@ func (a *Adapter) parse() error {
 			return err
 		}
 		if svcAnnotation.Generate {
-			svcResources, err := a.createServiceResources(genType, svcAnnotation.Methods, svcAnnotation.BlockName)
+			svcResources, err := a.createServiceResources(genType, svcAnnotation.Methods, svcAnnotation.BlockName, svcAnnotation.ExtraMethods)
+
 			if err != nil {
 				return err
 			}
+
 			if len(fd.Service) == 0 {
 				fd.Service = append(fd.Service, svcResources.svc)
 			} else {
+				// merge service resources
 				var exist = false
 				for _, svc := range fd.Service {
 					if svc.GetName() == svcResources.svc.GetName() {
@@ -376,6 +379,7 @@ type extraField struct {
 
 type protoMessageOptions struct {
 	SkipID      bool
+	SkipEdges   bool
 	ExtraFields []*extraField
 }
 
@@ -446,17 +450,19 @@ func (a *Adapter) inflateMessageDescriptor(genType *gen.Type, opts protoMessageO
 		msg.Field = append(msg.Field, protoField)
 	}
 
-	for _, e := range edges {
-		if _, ok := e.Annotations[SkipAnnotation]; ok {
-			continue
-		}
+	if !opts.SkipEdges {
+		for _, e := range edges {
+			if _, ok := e.Annotations[SkipAnnotation]; ok {
+				continue
+			}
 
-		descriptor, err := a.extractEdgeFieldDescriptor(genType, e)
-		if err != nil {
-			return err
-		}
-		if descriptor != nil {
-			msg.Field = append(msg.Field, descriptor)
+			descriptor, err := a.extractEdgeFieldDescriptor(genType, e)
+			if err != nil {
+				return err
+			}
+			if descriptor != nil {
+				msg.Field = append(msg.Field, descriptor)
+			}
 		}
 	}
 

@@ -5,6 +5,11 @@ import "google.golang.org/protobuf/types/descriptorpb"
 const (
 	TypeBool   = descriptorpb.FieldDescriptorProto_TYPE_BOOL
 	TypeString = descriptorpb.FieldDescriptorProto_TYPE_STRING
+	TypeInt32  = descriptorpb.FieldDescriptorProto_TYPE_INT32
+	TypeInt64  = descriptorpb.FieldDescriptorProto_TYPE_INT64
+	TypeUint32 = descriptorpb.FieldDescriptorProto_TYPE_UINT32
+	TypeUint64 = descriptorpb.FieldDescriptorProto_TYPE_UINT64
+	TypeFloat  = descriptorpb.FieldDescriptorProto_TYPE_FLOAT
 )
 
 func NamedMessages(messages ...*namedMessage) MessageOption {
@@ -34,6 +39,11 @@ func (nm *namedMessage) WithGroups(groups *FieldGroups) *namedMessage {
 
 func (nm *namedMessage) WithSkipID(skip bool) *namedMessage {
 	nm.ProtoMessageOptions.SkipID = skip
+	return nm
+}
+
+func (nm *namedMessage) WithSkipEdges(skip bool) *namedMessage {
+	nm.ProtoMessageOptions.SkipEdges = skip
 	return nm
 }
 

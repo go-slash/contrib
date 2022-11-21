@@ -35,11 +35,22 @@ func Field(num int, options ...FieldOption) schema.Annotation {
 	return f
 }
 
+func FieldDefine(num int, options ...FieldOption) PbField {
+	f := pbfield{Number: num}
+	for _, apply := range options {
+		apply(&f)
+	}
+	return f
+}
+
+type PbField = pbfield
+
 type pbfield struct {
 	Number    int
 	Type      descriptorpb.FieldDescriptorProto_Type
 	TypeName  string
 	FieldName string
+	Repeated  bool
 }
 
 func (f pbfield) Name() string {
